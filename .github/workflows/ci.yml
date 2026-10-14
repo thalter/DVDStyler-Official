@@ -1,0 +1,219 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+  # release.yml reuses this workflow to produce the release artifacts.
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  # Never cancel tag (release) builds.
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  # ntxalex/wxsvg master; Homebrew does not package wxSVG.
+  WXSVG_REPO: https://github.com/ntxalex/wxsvg
+  WXSVG_SHA: 977130db0048e7cad8b97625bbe8fb3eb92e1780
+
+jobs:
+  linux:
+    name: Linux (Ubuntu 24.04)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential autoconf automake libtool flex bison pkg-config ccache \
+            gettext xmlto zip \
+            libwxgtk3.2-dev libwxgtk-media3.2-dev libwxsvg-dev \
+            libavformat-dev libavcodec-dev libavutil-dev libswscale-dev libavfilter-dev \
+            libcairo2-dev libpango1.0-dev libexif-dev libjpeg-dev libfontconfig-dev \
+            libudev-dev libdbus-1-dev \
+            ffmpeg genisoimage dvd+rw-tools dvdauthor
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-linux-${{ github.sha }}
+          restore-keys: ccache-linux-
+
+      - name: Create source tarball
+        run: |
+          mkdir -p dist
+          .github/scripts/make-source-tarball.sh dist
+
+      # Building from the tarball rather than the checkout proves the tarball is
+      # complete (stands in for `make distcheck`, which this tree cannot run).
+      - name: Build from source tarball
+        env:
+          CC: ccache gcc
+          CXX: ccache g++
+          CCACHE_BASEDIR: ${{ runner.temp }}/build
+        run: |
+          mkdir -p "$RUNNER_TEMP/build"
+          tar -xjf dist/DVDStyler-*.tar.bz2 -C "$RUNNER_TEMP/build"
+          cd "$RUNNER_TEMP"/build/DVDStyler-*
+          ./configure
+          make -j"$(nproc)"
+          make install DESTDIR="$RUNNER_TEMP/stage"
+          test -x "$RUNNER_TEMP/stage/usr/local/bin/dvdstyler"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-tarball
+          path: dist/DVDStyler-*.tar.bz2
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: linux-logs
+          path: ${{ runner.temp }}/build/*/config.log
+          if-no-files-found: ignore
+
+  macos:
+    name: macOS (Homebrew, arm64)
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install dependencies
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
+        run: |
+          # ffmpeg-full replaces ffmpeg (see BUILD-MACOS-HOMEBREW.md) and is keg-only;
+          # link it so pkg-config and the Makefile's /opt/local/bin/ffmpeg copy find it.
+          brew uninstall --ignore-dependencies ffmpeg 2>/dev/null || true
+          brew install ffmpeg-full dvdauthor autoconf automake libtool libconfig libexif \
+            libsvg-cairo xmlto cdrtools mjpegtools dylibbundler pkgconf wxwidgets pango \
+            jpeg-turbo gettext
+          brew link --force --overwrite ffmpeg-full
+          # Makefile.am's DVDStyler.app/libs targets hardcode /opt/local.
+          sudo ln -sfn /opt/homebrew /opt/local
+          echo "WXSVG_CACHE_KEY=wxsvg-${{ runner.os }}-${{ runner.arch }}-${WXSVG_SHA}-$(brew list --versions wxwidgets ffmpeg-full | tr ' \n' '-_')" >> "$GITHUB_ENV"
+
+      - name: Restore wxSVG
+        id: wxsvg-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/wxsvg-prefix
+          key: ${{ env.WXSVG_CACHE_KEY }}
+
+      - name: Build wxSVG
+        if: steps.wxsvg-cache.outputs.cache-hit != 'true'
+        run: |
+          git init "$RUNNER_TEMP/wxsvg"
+          cd "$RUNNER_TEMP/wxsvg"
+          git fetch --depth 1 "$WXSVG_REPO" "$WXSVG_SHA"
+          git checkout FETCH_HEAD
+          ./autogen.sh
+          CPPFLAGS='-I/opt/homebrew/include' ./configure --prefix="$HOME/wxsvg-prefix"
+          make -j"$(sysctl -n hw.ncpu)"
+          make install
+
+      - name: Build DVDStyler
+        run: |
+          export PKG_CONFIG_PATH="$HOME/wxsvg-prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
+          ./autogen.sh
+          ./configure
+          make -j"$(sysctl -n hw.ncpu)"
+
+      - name: Bundle DVDStyler.app
+        run: |
+          make DVDStyler.app
+          # dylibbundler prompts on stdin for libraries it cannot resolve.
+          make libs < /dev/null
+          test -x DVDStyler.app/Contents/MacOS/DVDStyler
+
+      - name: Create DMG
+        run: |
+          VERSION=$(sed -n 's/^AC_INIT(\[DVDStyler\],\[\([^]]*\)\].*/\1/p' configure.ac)
+          STAGE="$RUNNER_TEMP/dmg"
+          mkdir -p "$STAGE" dist
+          cp -R DVDStyler.app "$STAGE/"
+          cp ChangeLog "installer/Important notes.rtf" "$STAGE/"
+          ln -s /Applications "$STAGE/Applications"
+          # hdiutil intermittently fails with "Resource busy" on hosted runners.
+          for _ in 1 2 3; do
+            hdiutil create -volname DVDStyler -srcfolder "$STAGE" -ov -format UDZO \
+              "dist/DVDStyler-$VERSION-MacOSX.dmg" && break
+            sleep 5
+          done
+          test -f "dist/DVDStyler-$VERSION-MacOSX.dmg"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: dist/*.dmg
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: macos-logs
+          path: |
+            config.log
+            ${{ runner.temp }}/wxsvg/config.log
+          if-no-files-found: ignore
+
+  windows:
+    name: Windows (MSYS2 UCRT64, experimental)
+    runs-on: windows-latest
+    timeout-minutes: 90
+    # Windows support is in progress (BUILD-WINDOWS.md); failures must not block.
+    continue-on-error: true
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            base-devel git autoconf automake libtool bison flex gettext xmlto zip unzip
+          pacboy: >-
+            toolchain:p pkgconf:p wxwidgets3.2-msw:p wxsvg:p ffmpeg:p libexif:p
+            fontconfig:p cairo:p pango:p libjpeg-turbo:p
+
+      # dvdauthor, cdrtools and dvd+rw-tools are not packaged in MSYS2, but
+      # configure only checks that they exist (they are runtime tools). Stub them
+      # so the job gets as far as compiling and linking.
+      - name: Stub runtime-only tools
+        run: |
+          mkdir -p "$HOME/stubs"
+          for t in dvdauthor mkisofs growisofs; do
+            printf '#!/bin/sh\necho "%s stub" >&2\nexit 1\n' "$t" > "$HOME/stubs/$t"
+            chmod +x "$HOME/stubs/$t"
+          done
+
+      - name: Build DVDStyler
+        run: |
+          export PATH="$PATH:$HOME/stubs"
+          ./autogen.sh
+          # MSYS2 may install only the versioned wx-config-3.2 script.
+          WXCFG=$(command -v wx-config || command -v wx-config-3.2)
+          ./configure --with-wx-config="$WXCFG"
+          make -j"$(nproc)"
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: windows-logs
+          path: config.log
+          if-no-files-found: ignore

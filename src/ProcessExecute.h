@@ -10,7 +10,7 @@
 #ifndef DS_PROCESS_EXECUTE_H
 #define DS_PROCESS_EXECUTE_H
 
-#include "Process.h"
+#include "ProcessBase.h"
 #include <wxVillaLib/ProgramProcess.h>
 #include <wxVillaLib/PipeExecute.h>
 #include <wx/regex.h>

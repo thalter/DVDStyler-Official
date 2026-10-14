@@ -10,7 +10,7 @@
 #ifndef DS_PROCESS_BURN_H
 #define DS_PROCESS_BURN_H
 
-#include "Process.h"
+#include "ProcessBase.h"
 
 class BurnDlg;
 

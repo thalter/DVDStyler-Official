@@ -10,7 +10,7 @@
 #ifndef DS_PROCESS_CLEAN_TEMP_H
 #define DS_PROCESS_CLEAN_TEMP_H
 
-#include "Process.h"
+#include "ProcessBase.h"
 
 /**
  * Implements process of temporary directory cleaning

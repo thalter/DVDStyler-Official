@@ -7,7 +7,7 @@
 // Licence:     GPL
 /////////////////////////////////////////////////////////////////////////////
 
-#include "Process.h"
+#include "ProcessBase.h"
 #include "ProcessExecute.h"
 
 bool Process::Exec(wxString command, wxString inputFile, wxString outputFile) {

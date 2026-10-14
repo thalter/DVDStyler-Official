@@ -95,7 +95,7 @@ AC_CHECK_HEADER([libavformat/avformat.h],[],[AC_MSG_ERROR([*** missing ffmpeg li
 #include <stdint.h>])
 
 dnl check for wxSVG
-PKG_CHECK_MODULES(wxSVG, [libwxsvg >= 1.5.23], [LIBS="$LIBS $wxSVG_LIBS"], [AC_MSG_ERROR([*** missing wxSVG library >= 1.5.23 ***])])
+PKG_CHECK_MODULES(wxSVG, [libwxsvg >= 1.5.23], [CXXFLAGS="$CXXFLAGS $wxSVG_CFLAGS";LIBS="$LIBS $wxSVG_LIBS"], [AC_MSG_ERROR([*** missing wxSVG library >= 1.5.23 ***])])
 AC_MSG_CHECKING([for wxSVG library with ffmpeg/libav support])
 WXSVGLIBAV=no
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <wxSVG/mediadec_ffmpeg.h>]], [[wxFfmpegMediaDecoder *a = new wxFfmpegMediaDecoder;]])],[WXSVGLIBAV=yes],[WXSVGLIBAV=no])

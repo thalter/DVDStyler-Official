@@ -105,9 +105,10 @@ jobs:
           sudo ln -sfn /opt/homebrew /opt/local
           echo "WXSVG_CACHE_KEY=wxsvg-${{ runner.os }}-${{ runner.arch }}-${WXSVG_SHA}-$(brew list --versions wxwidgets ffmpeg-full | tr ' \n' '-_')" >> "$GITHUB_ENV"
 
+      # Separate restore/save so the wxSVG build is cached even when a later step fails.
       - name: Restore wxSVG
         id: wxsvg-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: ~/wxsvg-prefix
           key: ${{ env.WXSVG_CACHE_KEY }}
@@ -123,6 +124,13 @@ jobs:
           CPPFLAGS='-I/opt/homebrew/include' ./configure --prefix="$HOME/wxsvg-prefix"
           make -j"$(sysctl -n hw.ncpu)"
           make install
+
+      - name: Save wxSVG
+        if: steps.wxsvg-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/wxsvg-prefix
+          key: ${{ env.WXSVG_CACHE_KEY }}
 
       - name: Build DVDStyler
         run: |

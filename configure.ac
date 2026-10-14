@@ -54,6 +54,8 @@ dnl given the global "using namespace std" in our headers, so stay on C++14.
 case "${host_os}" in
 	*mingw*|*cygwin*)
 		CXXFLAGS="$CXXFLAGS -std=gnu++14"
+		dnl COM (CoCreateInstance) and the taskbar GUIDs used in MainWin.cpp
+		LIBS="$LIBS -lole32 -luuid"
 		;;
 esac
 

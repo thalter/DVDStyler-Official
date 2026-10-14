@@ -141,9 +141,12 @@ jobs:
 
       - name: Bundle DVDStyler.app
         run: |
-          make DVDStyler.app
+          # Homebrew binaries are read-only (0555) and the targets copy them with
+          # their mode, so strip/dylibbundler need root, as BUILD-MACOS-HOMEBREW.md says.
+          sudo make DVDStyler.app
           # dylibbundler prompts on stdin for libraries it cannot resolve.
-          make libs < /dev/null
+          sudo make libs < /dev/null
+          sudo chown -R "$(id -u):$(id -g)" DVDStyler.app
           test -x DVDStyler.app/Contents/MacOS/DVDStyler
 
       - name: Create DMG

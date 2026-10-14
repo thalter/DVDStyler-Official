@@ -41,7 +41,7 @@ protected:
 	bool ExecAsync(wxString command);
 	
 	/** Removes given file and print error message if it failed */
-	bool DeleteFile(wxString fname);
+	bool RemoveFile(wxString fname);
 };  
 
 #endif // DS_PROCESS_H

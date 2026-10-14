@@ -213,7 +213,7 @@ bool ProcessMenu::GenerateMenu(Menu* menu, WidescreenType widescreenType, const 
 				}
 				AVConvExecute exec(progressDlg, -1);
 				if (!exec.Execute(transcoder.GetCmd())) {
-					DeleteFile(audioFileTmp);
+					RemoveFile(audioFileTmp);
 					progressDlg->Failed(_("Error transcoding of ") + menu->GetBackground());
 					return false;
 				}
@@ -239,8 +239,8 @@ bool ProcessMenu::GenerateMenu(Menu* menu, WidescreenType widescreenType, const 
 					s_config.GetUseMplexForMenus()))
 				return false;
 			if (s_config.GetRemoveTempFiles()) {
-				DeleteFile(m2vFile);
-				DeleteFile(audioFileTmp);
+				RemoveFile(m2vFile);
+				RemoveFile(audioFileTmp);
 			}
 		}
 	} else { // menu with still image
@@ -315,8 +315,8 @@ bool ProcessMenu::GenerateMenu(Menu* menu, WidescreenType widescreenType, const 
 					s_config.GetUseMplexForMenus()))
 				return false;
 			if (s_config.GetRemoveTempFiles()) {
-				DeleteFile(m2vFile);
-				DeleteFile(audioFileTmp);
+				RemoveFile(m2vFile);
+				RemoveFile(audioFileTmp);
 			}
 		}
 	}
@@ -359,11 +359,11 @@ bool ProcessMenu::GenerateMenu(Menu* menu, WidescreenType widescreenType, const 
 		}
 		if (s_config.GetRemoveTempFiles() || stIdx + 1 < stCount) {
 			if ((!videoMenu || mpegFile != menu->GetBackground()))
-				DeleteFile(mpegFile);
-			DeleteFile(btFile);
-			DeleteFile(hlFile);
-			DeleteFile(selFile);
-			DeleteFile(spuFile);
+				RemoveFile(mpegFile);
+			RemoveFile(btFile);
+			RemoveFile(hlFile);
+			RemoveFile(selFile);
+			RemoveFile(spuFile);
 		}
 	}
 	

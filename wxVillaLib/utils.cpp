@@ -80,8 +80,8 @@ wxString wxFindDataDirectory(wxString dir)
   dname.Normalize();
   if (wxDir::Exists(dname.GetFullPath()))
 	return dname.GetFullPath();
-#ifdef DATADIR
-  return wxString(DATADIR,wxConvLocal) + wxFILE_SEP_PATH + dir + wxFILE_SEP_PATH;
+#ifdef DVDSTYLER_DATADIR
+  return wxString(DVDSTYLER_DATADIR,wxConvLocal) + wxFILE_SEP_PATH + dir + wxFILE_SEP_PATH;
 #else
   return wxGetAppPath() + dir + wxFILE_SEP_PATH;
 #endif
@@ -96,8 +96,8 @@ wxString wxFindDataFile(wxString filename)
   fname.Normalize();
   if (wxFileExists(fname.GetFullPath()))
 	return fname.GetFullPath();
-#ifdef DATADIR
-  return wxString(DATADIR,wxConvLocal) + wxFILE_SEP_PATH + filename;
+#ifdef DVDSTYLER_DATADIR
+  return wxString(DVDSTYLER_DATADIR,wxConvLocal) + wxFILE_SEP_PATH + filename;
 #else
   return wxGetAppPath() + filename;
 #endif

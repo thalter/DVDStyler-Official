@@ -130,8 +130,8 @@ bool ProcessSubtitles::MultiplexSubtitles(const wxString& vobFile, TextSub* text
 	}
 	if (s_config.GetRemoveTempFiles()) {
 		if (vobFile == resultFile + _T(".old"))
-			DeleteFile(vobFile);
-		DeleteFile(spuFile);
+			RemoveFile(vobFile);
+		RemoveFile(spuFile);
 	}
 
 	wxYield();

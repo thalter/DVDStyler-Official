@@ -181,11 +181,9 @@ jobs:
           if-no-files-found: ignore
 
   windows:
-    name: Windows (MSYS2 UCRT64, experimental)
+    name: Windows (MSYS2 UCRT64)
     runs-on: windows-latest
     timeout-minutes: 90
-    # Windows support is in progress (BUILD-WINDOWS.md); failures must not block.
-    continue-on-error: true
     defaults:
       run:
         shell: msys2 {0}

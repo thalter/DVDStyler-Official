@@ -7,7 +7,7 @@
 // Licence:     GPL
 /////////////////////////////////////////////////////////////////////////////
 
-#include "Process.h"
+#include "ProcessBase.h"
 #include "ProcessExecute.h"
 
 bool Process::Exec(wxString command, wxString inputFile, wxString outputFile) {
@@ -20,7 +20,7 @@ bool Process::ExecAsync(wxString command) {
 	return wxExecute(command) != 0;
 }
 
-bool Process::DeleteFile(wxString fname) {
+bool Process::RemoveFile(wxString fname) {
 	if (wxFileExists(fname) && !wxRemoveFile(fname)) {
 		progressDlg->AddDetailMsg(wxString::Format(_("Can't remove file '%s'"), fname.c_str()), *wxRED);
 		return false;

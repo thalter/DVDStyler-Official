@@ -244,9 +244,9 @@ bool ProcessTranscode::Transcode(Vob* vob, AspectRatio aspect, int videoBitrate,
 			}
 			// remove temp files
 			if (s_config.GetRemoveTempFiles()) {
-				DeleteFile(videoFile);
+				RemoveFile(videoFile);
 				for (unsigned int audioIdx = 0; audioIdx < audioFiles.size(); audioIdx++)
-					DeleteFile(audioFiles[audioIdx]);
+					RemoveFile(audioFiles[audioIdx]);
 			}
 		}
 	}

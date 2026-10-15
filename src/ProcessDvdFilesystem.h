@@ -10,7 +10,7 @@
 #ifndef DS_PROCESS_DVD_FILESYSTEM_H
 #define DS_PROCESS_DVD_FILESYSTEM_H
 
-#include "Process.h"
+#include "ProcessBase.h"
 
 /**
  * Implements process of DVD file system generation

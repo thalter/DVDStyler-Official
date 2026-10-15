@@ -10,7 +10,7 @@
 #ifndef DS_PROCESS_PREVIEW_H
 #define DS_PROCESS_PREVIEW_H
 
-#include "Process.h"
+#include "ProcessBase.h"
 
 class BurnDlg;
 

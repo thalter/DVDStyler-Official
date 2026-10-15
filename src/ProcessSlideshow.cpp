@@ -216,9 +216,9 @@ bool ProcessSlideshow::GenerateSlideshow(Slideshow* slideshow, const wxString& v
 				audioBitrate, s_config.GetUseMplexForMenus()))
 			return false;
 		if (s_config.GetRemoveTempFiles()) {
-			DeleteFile(m2vFile);
+			RemoveFile(m2vFile);
 			if (concatFile.length())
-				DeleteFile(concatFile);
+				RemoveFile(concatFile);
 		}
 	}
 

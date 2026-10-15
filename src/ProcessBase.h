@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////
-// Name:        Process.h
+// Name:        ProcessBase.h
 // Author:      Alex Thuering
 // Created:     26.09.2014
 // RCS-ID:      $Id: Process.h,v 1.2 2014/10/20 05:58:08 ntalex Exp $
@@ -41,7 +41,7 @@ protected:
 	bool ExecAsync(wxString command);
 	
 	/** Removes given file and print error message if it failed */
-	bool DeleteFile(wxString fname);
+	bool RemoveFile(wxString fname);
 };  
 
 #endif // DS_PROCESS_H

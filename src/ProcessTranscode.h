@@ -10,7 +10,7 @@
 #ifndef DS_PROCESS_TRANSCODE_H
 #define DS_PROCESS_TRANSCODE_H
 
-#include "Process.h"
+#include "ProcessBase.h"
 #include "ProcessExecute.h"
 class Vob;
 class Stream;

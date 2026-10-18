@@ -33,18 +33,39 @@ cp -R "$MINGW_PREFIX/etc/fonts" "$ROOT/etc/"
 cp COPYING ChangeLog README "$ROOT/"
 cp installer/README-windows-portable.txt "$ROOT/README-Windows.txt"
 
-# Bundle every DLL the executables load from the MinGW prefix (ldd recurses).
-ldd "$ROOT"/bin/*.exe | sed -n "s|.* => \($MINGW_PREFIX/bin/[^ ]*\.dll\) .*|\1|Ip" | sort -u |
-	while read -r dll; do cp "$dll" "$ROOT/bin/"; done
+NTLDD=$MINGW_PREFIX/bin/ntldd.exe
+
+# Turn ntldd -R output into one Unix path per resolved DLL.
+resolved() {
+	tr -d '\r' | sed -n 's/.* => \(.*\) (0x[0-9a-fA-F]*)$/\1/p' |
+		while read -r p; do cygpath -u "$p"; done
+}
+
+# Bundle every DLL resolved from the MinGW prefix. Repeat until nothing new is
+# found, since DLLs copied in one pass may pull in more.
+for _ in 1 2 3 4 5; do
+	NEW=$("$NTLDD" -R "$ROOT"/bin/*.exe "$ROOT"/bin/*.dll 2>/dev/null | resolved |
+		grep -i "^$MINGW_PREFIX/bin/" | sort -u |
+		while read -r dll; do
+			[ -e "$ROOT/bin/$(basename "$dll")" ] || echo "$dll"
+		done)
+	[ -n "$NEW" ] || break
+	echo "$NEW" | while read -r dll; do cp "$dll" "$ROOT/bin/"; done
+done
 
 # Every dependency must now resolve inside the package or to Windows itself.
-# Run with a PATH that excludes MSYS2 so nothing resolves from the build tree.
-DEPS=$(PATH=/c/Windows/System32:/c/Windows "$MINGW_PREFIX/bin/ntldd.exe" -R "$ROOT"/bin/*.exe)
+# Check with a PATH that excludes MSYS2 so nothing resolves from the build tree.
 # API-set names (api-ms-win-*, ext-ms-*) are resolved by the loader, not files.
-if echo "$DEPS" | grep -Eiv '^[[:space:]]*(api|ext)-ms-' | grep -Ei 'not found|msys64' >&2; then
-	echo "unresolved or non-bundled DLLs (see above)" >&2
+CHECK=$(PATH=/c/Windows/System32:/c/Windows "$NTLDD" -R "$ROOT"/bin/*.exe | tr -d '\r')
+[ -n "$CHECK" ] || { echo "ntldd produced no output" >&2; exit 1; }
+MISSING=$(echo "$CHECK" | grep -Ev '^[[:space:]]*(api|ext)-ms-' | grep -i 'not found' || true)
+LEAKED=$(echo "$CHECK" | resolved | grep -i "^$MINGW_PREFIX/" || true)
+if [ -n "$MISSING$LEAKED" ]; then
+	echo "DLLs missing from the package:" >&2
+	printf '%s\n' "$MISSING" "$LEAKED" | sed '/^$/d' >&2
 	exit 1
 fi
+echo "Bundled $(find "$ROOT/bin" -name '*.dll' | wc -l) DLLs; $(du -sh "$ROOT" | cut -f1) unpacked" >&2
 
 (cd "$WORK" && zip -qr -9 "$OUT/$NAME.zip" "$NAME")
 echo "$OUT/$NAME.zip"

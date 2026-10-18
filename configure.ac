@@ -53,6 +53,7 @@ dnl Windows headers declare ::byte, which is ambiguous with C++17's std::byte
 dnl given the global "using namespace std" in our headers, so stay on C++14.
 case "${host_os}" in
 	*mingw*|*cygwin*)
+		mingw=true
 		CXXFLAGS="$CXXFLAGS -std=gnu++14"
 		dnl COM (CoCreateInstance) and the taskbar GUIDs used in MainWin.cpp
 		LIBS="$LIBS -lole32 -luuid"
@@ -225,6 +226,7 @@ case "${host_os}" in
 		;;
 esac
 AM_CONDITIONAL([OSX], [test x$osx = xtrue])
+AM_CONDITIONAL([MINGW], [test x$mingw = xtrue])
 
 dnl create Makefiles
 AC_CONFIG_FILES([

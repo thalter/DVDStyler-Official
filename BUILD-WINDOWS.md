@@ -14,7 +14,7 @@ Install MinGW-w64 C/C++ and core build tooling with pacman:
 
 ```bash
 pacman -Syu
-pacman -S --needed base-devel git autoconf automake libtool bison flex pkgconf gettext xmlto zip unzip
+pacman -S --needed base-devel git autoconf automake libtool bison flex pkgconf gettext xmlto docbook-xsl zip unzip
 pacman -S --needed mingw-w64-ucrt-x86_64-toolchain
 ```
 
@@ -92,6 +92,12 @@ make -j$(nproc)
 If `configure` cannot find `wx-config`, pass it explicitly: `./configure --with-wx-config=$(command -v wx-config-3.2)`.
 
 On MinGW, `configure` compiles as C++14 (C++17's `std::byte` clashes with the Windows `byte` type) and links `ole32` and `uuid`.
+
+## 4.1 Portable Package
+
+`.github/scripts/package-windows.sh [output-dir]` builds `DVDStyler-<version>-win64-portable.zip`, which CI uploads and attaches to releases. It stages `make install`, puts `dvdstyler.exe`, `ffmpeg.exe` and every DLL they load from `$MINGW_PREFIX/bin` into `bin\`, places the data directories, translations and fontconfig configuration next to it, and fails if any DLL would still resolve from MSYS2. It needs `mingw-w64-ucrt-x86_64-ntldd`.
+
+The package does not include dvdauthor, spumux, mkisofs or growisofs, so authoring, ISO creation and burning do not work with it yet.
 
 ## 5 Validate Build Output
 

@@ -149,6 +149,19 @@ jobs:
           sudo chown -R "$(id -u):$(id -g)" DVDStyler.app
           test -x DVDStyler.app/Contents/MacOS/DVDStyler
 
+      # strip and dylibbundler (install_name_tool) invalidate the binaries' code
+      # signatures, and macOS reports a downloaded arm64 app with broken
+      # signatures as "damaged". Ad-hoc sign nested code first, then the bundle.
+      - name: Ad-hoc sign DVDStyler.app
+        run: |
+          find DVDStyler.app/Contents -type f | while read -r f; do
+            if file -b "$f" | grep -q Mach-O; then
+              codesign --force --sign - "$f"
+            fi
+          done
+          codesign --force --sign - DVDStyler.app
+          codesign --verify --deep --strict --verbose=2 DVDStyler.app
+
       - name: Create DMG
         run: |
           VERSION=$(sed -n 's/^AC_INIT(\[DVDStyler\],\[\([^]]*\)\].*/\1/p' configure.ac)
@@ -198,7 +211,7 @@ jobs:
             base-devel git autoconf automake libtool bison flex gettext xmlto zip unzip
           pacboy: >-
             toolchain:p pkgconf:p wxwidgets3.2-msw:p wxsvg:p ffmpeg:p libexif:p
-            fontconfig:p cairo:p pango:p libjpeg-turbo:p
+            fontconfig:p cairo:p pango:p libjpeg-turbo:p ntldd:p
 
       # dvdauthor, cdrtools and dvd+rw-tools are not packaged in MSYS2, but
       # configure only checks that they exist (they are runtime tools). Stub them
@@ -219,6 +232,17 @@ jobs:
           WXCFG=$(command -v wx-config || command -v wx-config-3.2)
           ./configure --with-wx-config="$WXCFG"
           make -j"$(nproc)"
+
+      - name: Package portable zip
+        run: |
+          mkdir -p dist
+          .github/scripts/package-windows.sh dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-portable
+          path: dist/*.zip
+          if-no-files-found: error
 
       - uses: actions/upload-artifact@v4
         if: failure()

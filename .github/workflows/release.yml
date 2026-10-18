@@ -43,7 +43,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: '{source-tarball,macos-dmg}'
+          pattern: '{source-tarball,macos-dmg,windows-portable}'
           path: dist
           merge-multiple: true
 
@@ -58,6 +58,7 @@ jobs:
           if echo "$GITHUB_REF_NAME" | grep -Eq '(a|b|rc)[0-9]*$'; then
             PRERELEASE=--prerelease
           fi
+          NOTES='The macOS DMG and Windows zip are unsigned. The Windows portable build cannot author, create ISOs or burn yet: dvdauthor, spumux, mkisofs and growisofs are not included (see README-Windows.txt in the zip).'
           gh release create "$GITHUB_REF_NAME" dist/* \
             --title "DVDStyler ${GITHUB_REF_NAME#v}" \
-            --generate-notes --verify-tag --draft $PRERELEASE
+            --notes "$NOTES" --generate-notes --verify-tag --draft $PRERELEASE

@@ -19,6 +19,16 @@ endif
 AM_CXXFLAGS = @CXXFLAGS@ -I..
 LDADD = ../wxVillaLib/libwxvilla.a -ljpeg
 
+if MINGW
+# Icon, cursors, version info and the wx manifest (common controls v6).
+# DVDStyler.rc names its files relative to the top source directory.
+dvdstyler_rc.o: rc/DVDStyler.rc rc/dvdstyler.ico rc/move.cur rc/rotate.cur Version.h
+	$(WX_RESCOMP) -c 1252 -I$(top_srcdir) -I$(top_builddir) -I. -i $(srcdir)/rc/DVDStyler.rc -o $@
+LDADD += dvdstyler_rc.o
+EXTRA_dvdstyler_DEPENDENCIES = dvdstyler_rc.o
+CLEANFILES = dvdstyler_rc.o
+endif
+
 EXTRA_DIST = dvdvml.l dvdvmy.y
 MAINTAINERCLEANFILES = dvdvml.c dvdvmy.c dvdvmy.h
 

@@ -1,3 +1,7 @@
+# The help_%.zip recipes zip into the shared docs directory and collide when
+# run in parallel (zip temp files clash on Windows), so build them serially.
+.NOTPARALLEL:
+
 dist_man_MANS = dvdstyler.1
 
 LINGUAS=ca de el en es eu fi fr hu it ja nb pl pt pt_BR ro ru si uk zh_CN zh_TW

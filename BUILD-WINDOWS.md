@@ -14,7 +14,7 @@ Install MinGW-w64 C/C++ and core build tooling with pacman:
 
 ```bash
 pacman -Syu
-pacman -S --needed base-devel git autoconf automake libtool bison flex pkgconf gettext xmlto zip unzip
+pacman -S --needed base-devel git autoconf automake libtool bison flex pkgconf gettext xmlto docbook-xsl zip unzip
 pacman -S --needed mingw-w64-ucrt-x86_64-toolchain
 ```
 

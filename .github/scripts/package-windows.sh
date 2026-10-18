@@ -53,10 +53,12 @@ for _ in 1 2 3 4 5; do
 	echo "$NEW" | while read -r dll; do cp "$dll" "$ROOT/bin/"; done
 done
 
-# Every dependency must now resolve inside the package or to Windows itself.
-# Check with a PATH that excludes MSYS2 so nothing resolves from the build tree.
-# API-set names (api-ms-win-*, ext-ms-*) are resolved by the loader, not files.
-CHECK=$(PATH=/c/Windows/System32:/c/Windows "$NTLDD" -R "$ROOT"/bin/*.exe | tr -d '\r')
+# Every direct import of every file we ship must now resolve inside the package
+# or to Windows itself (not -R: Windows' own DLLs import internals that are
+# absent on some editions). Check with a PATH that excludes MSYS2 so nothing
+# resolves from the build tree. API-set names (api-ms-win-*, ext-ms-*) are
+# resolved by the loader, not files.
+CHECK=$(PATH=/c/Windows/System32:/c/Windows "$NTLDD" "$ROOT"/bin/*.exe "$ROOT"/bin/*.dll | tr -d '\r')
 [ -n "$CHECK" ] || { echo "ntldd produced no output" >&2; exit 1; }
 MISSING=$(echo "$CHECK" | grep -Ev '^[[:space:]]*(api|ext)-ms-' | grep -i 'not found' || true)
 LEAKED=$(echo "$CHECK" | resolved | grep -i "^$MINGW_PREFIX/" || true)

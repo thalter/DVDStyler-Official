@@ -208,7 +208,7 @@ jobs:
           msystem: UCRT64
           update: true
           install: >-
-            base-devel git autoconf automake libtool bison flex gettext xmlto zip unzip
+            base-devel git autoconf automake libtool bison flex gettext xmlto docbook-xsl zip unzip
           pacboy: >-
             toolchain:p pkgconf:p wxwidgets3.2-msw:p wxsvg:p ffmpeg:p libexif:p
             fontconfig:p cairo:p pango:p libjpeg-turbo:p ntldd:p

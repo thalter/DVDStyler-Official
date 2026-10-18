@@ -61,7 +61,7 @@ bool ProcessCleanTemp::DeleteDir(wxString dir) {
 	if (d.IsOpened()) {
 		wxString fname;
 		while (d.GetFirst(&fname, wxEmptyString, wxDIR_FILES | wxDIR_HIDDEN))
-			if (!DeleteFile(dir + fname))
+			if (!RemoveFile(dir + fname))
 				return false;
 		d.Close();
 		wxLogNull log;
@@ -88,7 +88,7 @@ bool ProcessCleanTemp::DeleteTempFiles(bool deleteOutDir) {
 			return false;
 		}
 	}
-	if (wxFileExists(tmpDir + TMP_ISO) && !DeleteFile(tmpDir + TMP_ISO))
+	if (wxFileExists(tmpDir + TMP_ISO) && !RemoveFile(tmpDir + TMP_ISO))
 		return false;
 	return true;
 }

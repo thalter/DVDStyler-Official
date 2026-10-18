@@ -12,8 +12,13 @@
 #include "utils.h"
 #include <wx/fontdlg.h>
 #include <wx/colordlg.h>
-#ifdef __WXMSW__
+// The native MSW colour dialog cannot edit alpha, so use the generic one when
+// this wxWidgets build ships it (stock MSYS2/MinGW builds do not).
+#if defined(__WXMSW__) && defined(__has_include)
+#if __has_include(<wx/generic/colrdlgg.h>)
 #include <wx/generic/colrdlgg.h>
+#define USE_GENERIC_COLOUR_DIALOG
+#endif
 #endif
 #include <wx/filedlg.h>
 #include <wx/dirdlg.h>
@@ -765,7 +770,7 @@ void wxPropDlg::OnSelectColour(wxCommandEvent& event) {
 #if wxCHECK_VERSION(3,1,0)
 	m_colourData.SetChooseAlpha(true);
 #endif
-#ifdef __WXMSW__
+#ifdef USE_GENERIC_COLOUR_DIALOG
 	wxGenericColourDialog dialog(propWindow, &m_colourData);
 #else
 	wxColourDialog dialog(propWindow, &m_colourData);

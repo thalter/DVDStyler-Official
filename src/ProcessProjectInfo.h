@@ -10,7 +10,7 @@
 #ifndef DS_PROCESS_PROJECT_INFO_H
 #define DS_PROCESS_PROJECT_INFO_H
 
-#include "Process.h"
+#include "ProcessBase.h"
 
 /**
  * Prints project info

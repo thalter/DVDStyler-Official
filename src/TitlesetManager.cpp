@@ -129,8 +129,8 @@ BEGIN_EVENT_TABLE(TitlesetManager, wxThumbnails)
 	EVT_MENU(MENU_TITLE_PROP_ID, TitlesetManager::OnProps)
 END_EVENT_TABLE()
 
-DEFINE_EVENT_TYPE(EVT_COMMAND_MENU_SELECTED)
-DEFINE_EVENT_TYPE(EVT_COMMAND_DVD_CHANGED)
+wxDEFINE_EVENT(EVT_COMMAND_MENU_SELECTED, wxCommandEvent);
+wxDEFINE_EVENT(EVT_COMMAND_DVD_CHANGED, wxCommandEvent);
 
 TitlesetManager::TitlesetManager(wxWindow* parent, int id): wxThumbnails(parent, id) {
 	SetThumbSize(96, 76);

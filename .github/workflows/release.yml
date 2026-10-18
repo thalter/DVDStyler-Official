@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  # Dry run: version check and full build with downloadable artifacts, but no
+  # release is created. Usable once this workflow is on the default branch.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-version:
+    name: Check tag matches configure.ac
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - run: |
+          VERSION=$(sed -n 's/^AC_INIT(\[DVDStyler\],\[\([^]]*\)\].*/\1/p' configure.ac)
+          if [ -z "$VERSION" ]; then
+            echo "::error::Cannot read AC_INIT version from configure.ac"
+            exit 1
+          fi
+          if [ "$GITHUB_REF_TYPE" != tag ]; then
+            echo "Dry run on $GITHUB_REF_NAME: would release v$VERSION"
+          elif [ "v$VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match AC_INIT version $VERSION in configure.ac"
+            exit 1
+          fi
+
+  build:
+    needs: check-version
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    name: Create draft GitHub release
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: '{source-tarball,macos-dmg}'
+          path: dist
+          merge-multiple: true
+
+      # Created as a draft: check the assets on the Releases page, then publish.
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          # Alpha/beta/rc versions (e.g. v3.3b4) are marked as pre-releases.
+          PRERELEASE=
+          if echo "$GITHUB_REF_NAME" | grep -Eq '(a|b|rc)[0-9]*$'; then
+            PRERELEASE=--prerelease
+          fi
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "DVDStyler ${GITHUB_REF_NAME#v}" \
+            --generate-notes --verify-tag --draft $PRERELEASE

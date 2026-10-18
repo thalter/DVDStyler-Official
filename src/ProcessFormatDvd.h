@@ -10,7 +10,7 @@
 #ifndef DS_PROCESS_FORMAT_DVD_H
 #define DS_PROCESS_FORMAT_DVD_H
 
-#include "Process.h"
+#include "ProcessBase.h"
 
 class BurnDlg;
 
